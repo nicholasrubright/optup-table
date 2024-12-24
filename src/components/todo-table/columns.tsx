@@ -12,9 +12,10 @@ export const columns = [
     header: () => <span>Name</span>,
   }),
   columnHelper.accessor("completed", {
+    header: () => <span></span>,
     cell: (info) => {
       return (
-        <div>
+        <div className="flex items-center justify-center">
           <Checkbox checked={info.getValue()} />
         </div>
       );

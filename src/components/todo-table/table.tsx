@@ -16,6 +16,7 @@ import {
   TableCell,
   Table,
 } from "../ui/table";
+import TodoTableToolbar from "./toolbar";
 
 interface TodoTableProps {
   todos: TodoSchema[];
@@ -82,6 +83,7 @@ export default function TodoTable({ todos }: TodoTableProps) {
           </TableBody>
         </Table>
       </div>
+      <TodoTableToolbar table={table} />
     </div>
   );
 }
