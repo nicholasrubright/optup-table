@@ -1,6 +1,6 @@
 "use client";
 
-import { type TodoSchema } from "@/lib/schemas";
+import { type Todos } from "@/lib/schemas";
 import {
   flexRender,
   getCoreRowModel,
@@ -17,13 +17,16 @@ import {
   Table,
 } from "../ui/table";
 import TodoTableToolbar from "./toolbar";
+import { api } from "@/trpc/react";
 
 interface TodoTableProps {
-  todos: TodoSchema[];
+  todos: Todos;
 }
 
 export default function TodoTable({ todos }: TodoTableProps) {
-  const [data, setData] = useState(() => [...todos]);
+  //const [data, setData] = useState(() => [...todos]);
+
+  const { data = [] } = api.todo.getAll.useQuery();
 
   const table = useReactTable({
     data,

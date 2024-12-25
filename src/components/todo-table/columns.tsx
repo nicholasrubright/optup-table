@@ -1,10 +1,10 @@
 "use client";
 
-import { type TodoSchema } from "@/lib/schemas";
+import { type Todo } from "@/lib/schemas";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { Checkbox } from "../ui/checkbox";
 
-const columnHelper = createColumnHelper<TodoSchema>();
+const columnHelper = createColumnHelper<Todo>();
 
 export const columns = [
   columnHelper.accessor("name", {

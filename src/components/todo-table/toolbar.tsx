@@ -1,38 +1,45 @@
 "use client";
 
-import { CreateTodoSchema, TodoSchema } from "@/lib/schemas";
-import { Table } from "@tanstack/react-table";
+import { type Table } from "@tanstack/react-table";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { api } from "@/trpc/react";
+import type { Todo, Todos, CreateTodoInput } from "@/lib/schemas";
 
 interface TodoTableToolbarProps {
-  table: Table<TodoSchema>;
+  table: Table<Todo>;
 }
 
 export default function TodoTableToolbar({ table }: TodoTableToolbarProps) {
   const [todo, setTodo] = useState<string>("");
+  const optCounter = useRef(-1);
 
   const utils = api.useUtils();
 
   const createTodo = api.todo.create.useMutation({
-    onMutate: async (todo: { name: string }) => {
+    onMutate: async (newTodo: CreateTodoInput) => {
       await utils.todo.getAll.cancel();
 
-      const prevTodos = utils.todo.getAll.getData()!;
+      const prevTodos = utils.todo.getAll.getData();
 
-      utils.todo.getAll.setData(
-        undefined,
-        (oldData: TodoSchema[] | undefined) => {
-          if (!oldData) return undefined;
+      const optId = optCounter.current--;
 
-          return [
-            ...oldData,
-            { id: 0, name: todo.name, completed: false, createdAt: new Date() },
-          ];
-        },
-      );
+      utils.todo.getAll.setData(undefined, (old: Todos | undefined) => {
+        const optTodo: Todo = {
+          id: optId,
+          name: newTodo.name,
+          completed: false,
+          createdAt: new Date(),
+        };
+
+        return old ? [...old, optTodo] : [optTodo];
+      });
+
+      return { prevTodos };
+    },
+    onError: (err, newTodo, context) => {
+      utils.todo.getAll.setData(undefined, context?.prevTodos);
     },
     onSuccess: async () => {
       setTodo("");
@@ -41,6 +48,13 @@ export default function TodoTableToolbar({ table }: TodoTableToolbarProps) {
       await utils.todo.getAll.invalidate();
     },
   });
+
+  const addTodo = useCallback(
+    async (name: string) => {
+      await createTodo.mutateAsync({ name });
+    },
+    [createTodo],
+  );
 
   return (
     <div className="flex items-center justify-center">
@@ -53,7 +67,7 @@ export default function TodoTableToolbar({ table }: TodoTableToolbarProps) {
         />
         <Button
           disabled={createTodo.isPending}
-          onClick={() => createTodo.mutate({ name: todo })}
+          onClick={() => addTodo(todo)}
           type="submit"
         >
           {createTodo.isPending ? "+ Adding..." : "+ Add"}
