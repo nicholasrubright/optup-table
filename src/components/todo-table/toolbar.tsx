@@ -1,6 +1,6 @@
 "use client";
 
-import { TodoSchema } from "@/lib/schemas";
+import { CreateTodoSchema, TodoSchema } from "@/lib/schemas";
 import { Table } from "@tanstack/react-table";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
@@ -14,9 +14,31 @@ interface TodoTableToolbarProps {
 export default function TodoTableToolbar({ table }: TodoTableToolbarProps) {
   const [todo, setTodo] = useState<string>("");
 
+  const utils = api.useUtils();
+
   const createTodo = api.todo.create.useMutation({
+    onMutate: async (todo: { name: string }) => {
+      await utils.todo.getAll.cancel();
+
+      const prevTodos = utils.todo.getAll.getData()!;
+
+      utils.todo.getAll.setData(
+        undefined,
+        (oldData: TodoSchema[] | undefined) => {
+          if (!oldData) return undefined;
+
+          return [
+            ...oldData,
+            { id: 0, name: todo.name, completed: false, createdAt: new Date() },
+          ];
+        },
+      );
+    },
     onSuccess: async () => {
       setTodo("");
+    },
+    onSettled: async () => {
+      await utils.todo.getAll.invalidate();
     },
   });
 
