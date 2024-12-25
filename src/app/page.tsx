@@ -1,10 +1,11 @@
 import Link from "next/link";
 
 import { api, HydrateClient } from "@/trpc/server";
-import { type TodoSchema } from "@/lib/schemas";
+import { Todos } from "@/lib/schemas";
 import TodoTable from "@/components/todo-table/table";
+import TodoContainer from "@/components/todo-table/container";
 
-async function getTodos(): Promise<TodoSchema[]> {
+async function getTodos(): Promise<Todos> {
   const todos = await api.todo.getAll();
 
   return todos;
@@ -20,7 +21,7 @@ export default async function Home() {
           <h2 className="text-2xl font-bold tracking-tight">Todos</h2>
         </div>
         <div>
-          <TodoTable todos={todos} />
+          <TodoContainer initialTodos={todos} />
         </div>
       </main>
     </HydrateClient>

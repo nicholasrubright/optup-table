@@ -6,47 +6,47 @@ import { Button } from "../ui/button";
 import { useCallback, useRef, useState } from "react";
 import { api } from "@/trpc/react";
 import type { Todo, Todos, CreateTodoInput } from "@/lib/schemas";
+import { useAtomValue, useSetAtom } from "jotai";
+import { todosAtom } from "@/atoms/todoAtoms";
 
-interface TodoTableToolbarProps {
-  table: Table<Todo>;
-}
+export default function TodoTableToolbar() {
+  const todos = useAtomValue(todosAtom);
+  const setTodos = useSetAtom(todosAtom);
 
-export default function TodoTableToolbar({ table }: TodoTableToolbarProps) {
-  const [todo, setTodo] = useState<string>("");
   const optCounter = useRef(-1);
+
+  const [todo, setTodo] = useState<string>("");
 
   const utils = api.useUtils();
 
   const createTodo = api.todo.create.useMutation({
     onMutate: async (newTodo: CreateTodoInput) => {
-      await utils.todo.getAll.cancel();
-
-      const prevTodos = utils.todo.getAll.getData();
-
+      const prevTodos = todos;
       const optId = optCounter.current--;
 
-      utils.todo.getAll.setData(undefined, (old: Todos | undefined) => {
-        const optTodo: Todo = {
-          id: optId,
-          name: newTodo.name,
-          completed: false,
-          createdAt: new Date(),
-        };
+      const optTodo: Todo = {
+        id: optId,
+        name: newTodo.name,
+        completed: false,
+        createdAt: new Date(),
+      };
 
-        return old ? [...old, optTodo] : [optTodo];
-      });
+      setTodos((currentTodos) => [optTodo, ...currentTodos]);
 
       return { prevTodos };
     },
     onError: (err, newTodo, context) => {
       utils.todo.getAll.setData(undefined, context?.prevTodos);
     },
-    onSuccess: async () => {
+    onSuccess: (newTodo: Todo) => {
+      setTodos((currentTodos) =>
+        currentTodos.map((todo) => (todo.id < 0 ? newTodo : todo)),
+      );
       setTodo("");
     },
-    onSettled: async () => {
-      await utils.todo.getAll.invalidate();
-    },
+    // onSettled: async () => {
+    //   //await utils.todo.getAll.invalidate();
+    // },
   });
 
   const addTodo = useCallback(
